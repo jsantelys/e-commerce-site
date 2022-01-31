@@ -33,7 +33,7 @@ const Dashboard = () => {
             <Container fluid="lg">
                 <Row>
                     {products.length !== 0 ? <h2 className='text-center mb-4'>Products</h2>
-                        : <h1 className="d-flex align-items-center justify-content-center">No products to show!</h1>}
+                        : <h1 className="d-flex align-items-center justify-content-center">Checking products...</h1>}
                 </Row>
                 {products.map((productGroup, index) => (
                     <Row key={index} className="mb-3">

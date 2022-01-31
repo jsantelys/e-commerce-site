@@ -1,60 +1,79 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { db } from '../firebase'
-import { ListGroup } from 'react-bootstrap'
+import CartProducts from './CartProducts'
 
 const Cart = () => {
 
-    const [products, setProducts] = useState([]);
+    const { currentUser } = useAuth();
+    const [cart, setCart] = useState([]);
 
     useEffect(() => {
+
+        const fetchData = () => {
+            return db.collection('Cart' + currentUser.uid).get()
+        }
+
         const getData = async () => {
             const productsFromServer = await fetchData()
             const productsData = productsFromServer.docs.map(doc => ({
-                ProductId: doc.id,
-                ProductName: doc.data().ProductName,
-                ProductPrice: doc.data().ProductPrice,
-                ProductImg: doc.data().ProductImg
+                ID: doc.id,
+                ...doc.data(),
             }))
-
-            const numberOfRows = Math.ceil(productsData.length / 3)
-
-            setProducts(Array(numberOfRows).fill().map((_, rowIndex) =>
-                productsData.slice(rowIndex * 3, (rowIndex * 3) + 3)))
+            setCart(productsData)
         }
         getData();
-    }, [])
-
-    // const fetchData = () => {
-    //     return db.collection('Products').get()
-    // }
+    }, [currentUser])
 
 
-    const { currentUser } = useAuth();
-    // const [Cart, setCart] = useState([]);
 
-    // useEffect(() => {
-    //     const getData = async () => {
-    //         const productsFromServer = await fetchData()
-    //         const productsData = productsFromServer.docs.map(doc => ({
-    //             ProductId: doc.id,
-    //             ProductName: doc.data().ProductName,
-    //             ProductPrice: doc.data().ProductPrice,
-    //             ProductImg: doc.data().ProductImg
-    //         }))
-    //         setCart(productsData)
-    //     }
-    //     getData();
-    // }, [])
-
-    const fetchData = () => {
-        return db.collection('Cart' + currentUser.uid).get()
+    const cartRemoveAll = async () => {
+        const ref = db.collection('Cart' + currentUser.uid)
+        ref.onSnapshot((snapshot) => {
+            snapshot.docs.forEach((doc) => {
+                ref.doc(doc.id).delete()
+            })
+        })
+        setCart([]);
     }
 
-    return (
-        <ListGroup>
 
-        </ListGroup>
+
+    const cartProductAdd = (cartProduct) => {
+        const newCart = [...cart]
+        let product = newCart.find(x => x.ID === cartProduct.ID)
+        product.ProductQty++;
+        product.ProductTotal = product.ProductQty * product.ProductPrice;
+        db.collection('Cart' + currentUser.uid).doc(cartProduct.ID).update(product).then(() => {
+        })
+        setCart(newCart);
+    }
+
+    const cartProductRemove = (cartProduct) => {
+        if (cartProduct.ProductQty > 1) {
+            const newCart = [...cart]
+            let product = newCart.find(x => x.ID === cartProduct.ID)
+            product.ProductQty--;
+            product.ProductTotal = product.ProductQty * product.ProductPrice;
+            db.collection('Cart' + currentUser.uid).doc(cartProduct.ID).update(product).then(() => {
+            })
+            setCart(newCart);
+        }
+    }
+
+
+    return (
+        <div className="Cart-Container">
+            <div className='Header'>
+                <h3 className='Heading'>Shopping Cart</h3>
+                <h5 className='Action' onClick={cartRemoveAll}>Remove all</h5>
+            </div>
+            {cart.length > 0 &&
+                <CartProducts cart={cart} cartProductAdd={cartProductAdd} cartProductRemove={cartProductRemove} />
+            }{cart.length < 1 && (
+                <h2>No Items in cart yet!</h2>
+            )}
+        </div>
     )
 }
 

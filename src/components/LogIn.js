@@ -19,7 +19,7 @@ const LogIn = () => {
             setLoading(true);
             await logIn(emailRef.current.value, passwordRef.current.value)
                 .then(() => {
-                    navigate('/dashboard')
+                    navigate('/')
                 })
                 .catch((error) => {
                     if (error.code === 'auth/user-not-found') {
