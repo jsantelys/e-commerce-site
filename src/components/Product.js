@@ -45,8 +45,6 @@ const Product = ({ id, name, price, img, definition }) => {
                 setAdded(false);
                 setLoading(false);
             })
-            .finally(() => {
-            })
 
     }
 
